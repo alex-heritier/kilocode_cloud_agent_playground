@@ -10,6 +10,33 @@ Key principles guiding the architecture:
 - **Client-Side Only**: No server-side dependencies for MVP, hosted on GitHub Pages.
 - **CDN-Based Libraries**: No build process; all dependencies loaded via CDN.
 
+## Current Implementation Mockup
+
+This section provides a mockup of the current MVP implementation, demonstrating the core architecture principles in action.
+
+### Current Component Hierarchy
+
+```
+App
+├── Header
+└── Main
+    └── CardComponent
+```
+
+- **App**: Root React component managing global state with hooks, handling SRS logic and card selection.
+- **Header**: Simple header displaying the app title.
+- **Main**: Main content area that conditionally renders the current card or a completion message.
+- **CardComponent**: Interactive flashcard component handling user input, answer validation, and feedback display.
+
+### Current Data Management
+
+- **State**: Managed via React useState hooks for progress map, current card, and lesson state.
+- **Persistence**: localStorage for storing user progress and lesson data.
+- **Mock Data**: Static array of vocabulary cards; SRS functions for scheduling and progress updates.
+- **Modularity**: SRS logic separated into pure functions, allowing easy testing and future enhancement.
+
+This mockup follows the project guidelines: client-side only, React via CDN, BEM CSS (applied in styles.css), and modular design for future backend integration.
+
 ## System Architecture
 
 The application follows a traditional client-side architecture where all logic, data processing, and storage occur in the browser. React handles the UI rendering, while custom modules manage SRS logic, data persistence, and user interactions.
