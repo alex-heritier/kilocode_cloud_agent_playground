@@ -2,7 +2,7 @@
 
 ## Overview
 
-The English to Vietnamese Learning Platform is a client-side web application designed to facilitate language learning through Spaced Repetition System (SRS) and n+1 strategies. The platform focuses on building reading and writing skills by reviewing previously learned vocabulary and introducing new words incrementally. The application is built entirely on the frontend, with all backend functionalities mocked to allow for easy future integration with real services.
+The English to Vietnamese Learning Platform is a client-side web application designed to facilitate language learning through Spaced Repetition System (SRS) and n+1 strategies. The platform focuses on building reading and writing skills by reviewing previously learned vocabulary and introducing new words incrementally. User authentication is implemented via Google OAuth 2.0 to enable personalized learning experiences and data synchronization. The application is built entirely on the frontend, with all backend functionalities mocked to allow for easy future integration with real services.
 
 Key principles guiding the architecture:
 - **SOLID Principles**: Ensuring maintainable, extensible, and testable code.
@@ -23,16 +23,19 @@ graph TD
     C --> D[UI Components]
     C --> E[SRS Engine]
     C --> F[Data Storage Module]
-    F --> G[localStorage API]
-    F --> H[In-Memory Mocks]
-    E --> I[Vocabulary Data]
-    I --> F
+    C --> G[Authentication Module]
+    F --> H[localStorage API]
+    F --> I[In-Memory Mocks]
+    G --> J[Google OAuth 2.0]
+    E --> K[Vocabulary Data]
+    K --> F
 ```
 
 - **React Application**: Core framework for building the UI, using hooks for state management.
 - **UI Components**: Modular React components following BEM CSS conventions.
 - **SRS Engine**: Implements spaced repetition algorithms and n+1 strategy logic.
 - **Data Storage Module**: Abstracts data persistence, currently using localStorage with interfaces for future backend integration.
+- **Authentication Module**: Handles Google OAuth 2.0 flow for user login and session management.
 - **Vocabulary Data**: Static or dynamically loaded word lists with translations and metadata.
 
 ## Components and Responsibilities
@@ -44,18 +47,21 @@ The application is structured as a tree of React components, each with single re
 ```mermaid
 graph TD
     A[App] --> B[Header]
-    A --> C[MainContent]
-    C --> D[LessonView]
-    C --> E[ReviewSession]
-    C --> F[ProgressDashboard]
-    D --> G[WordCard]
-    D --> H[InputField]
-    E --> G
-    F --> I[StatisticsChart]
+    A --> C[Login]
+    A --> D[MainContent]
+    D --> E[LessonView]
+    D --> F[ReviewSession]
+    D --> G[ProgressDashboard]
+    E --> H[WordCard]
+    E --> I[InputField]
+    F --> H
+    G --> J[StatisticsChart]
+    B --> K[UserMenu]
 ```
 
-- **App**: Root component, manages global state and routing between views.
+- **App**: Root component, manages global state, authentication, and routing between views.
 - **Header**: Displays app title, navigation, and user progress summary.
+- **Login**: Handles Google OAuth authentication flow and user session management.
 - **MainContent**: Container for the primary content area, switches between different views.
 - **LessonView**: Presents new vocabulary in context, implements n+1 strategy.
 - **ReviewSession**: SRS-based review interface for reinforcing learned words.
@@ -63,6 +69,7 @@ graph TD
 - **WordCard**: Displays word, translation, and example usage.
 - **InputField**: Handles user input for writing exercises.
 - **StatisticsChart**: Renders progress data using simple charting libraries.
+- **UserMenu**: Shows user info and logout option in the header.
 
 Each component is designed to be reusable and testable, with clear props interfaces and minimal side effects.
 
@@ -98,6 +105,9 @@ Data structures include:
 - Vocabulary items: { id, english, vietnamese, difficulty, examples }
 - User progress: { wordId, easeFactor, interval, nextReview, correctCount }
 - Session data: { currentLesson, reviewQueue, statistics }
+- User profile: { id, email, name, avatar } (from Google OAuth)
+
+Data is stored in localStorage keyed by user ID to enable multi-user support on shared devices. The Data Storage Module handles user-specific data isolation and provides interfaces for future cloud synchronization.
 
 ## SRS and n+1 Strategy Implementation
 
@@ -112,9 +122,10 @@ Implements a modified SM-2 algorithm for optimal memory retention:
 
 ### n+1 Strategy
 
-- **Incremental Introduction**: Each lesson introduces exactly one new word.
-- **Contextual Learning**: New words presented in sentences with previously learned vocabulary.
-- **Progressive Difficulty**: Word selection based on user's current proficiency level.
+- **Fixed Introduction Order**: Cards are introduced to all users in the same predetermined sequence to ensure consistent progression.
+- **Incremental Introduction**: Each session introduces exactly one new card (word or sentence).
+- **Contextual Learning**: New cards presented with previously learned vocabulary.
+- **SRS for Reviews**: Once introduced, card review scheduling follows individual user retention via SRS algorithm.
 
 ### Implementation Details
 
@@ -161,10 +172,36 @@ Example structure:
 - **Spacing**: Consistent margins and padding using a grid system.
 - **Feedback**: Visual cues for correct/incorrect answers, progress indicators.
 
+## Authentication
+
+User authentication is implemented using Google OAuth 2.0 to provide secure, seamless login without requiring password management.
+
+### Google OAuth 2.0 Implementation
+
+- **Client-Side Flow**: Uses Google Identity Services (GIS) JavaScript library for authorization code flow with PKCE.
+- **Scopes**: Requests basic profile information (email, name, avatar) via `openid profile email` scopes.
+- **Token Handling**: ID tokens are validated client-side and used to establish user sessions.
+- **Session Management**: User state is maintained in memory with automatic logout on token expiration.
+
+### Security Considerations
+
+- **No Sensitive Data Storage**: User credentials are never stored; only Google-provided ID tokens are handled.
+- **HTTPS Requirement**: OAuth flow requires secure connections to prevent token interception.
+- **Token Validation**: ID tokens are validated using Google's public keys to ensure authenticity.
+- **Logout Handling**: Proper cleanup of user data and tokens on logout.
+
+### User Experience
+
+- **One-Click Login**: Single button initiates Google authentication flow.
+- **Persistent Sessions**: Users remain logged in across browser sessions until explicit logout.
+- **Profile Integration**: User avatar and name displayed in header for personalization.
+
 ## Deployment and Hosting
 
 - **GitHub Pages**: Static hosting with automatic deployment from main branch.
-- **CDN Dependencies**: React, Babel, and other libraries loaded from unpkg.
+- **CDN Dependencies**: React, Babel, Google Identity Services, and other libraries loaded from unpkg.
+- **OAuth Configuration**: Requires Google Cloud Console setup with OAuth 2.0 client ID, authorized domains (GitHub Pages URL), and redirect URIs.
+- **HTTPS Enforcement**: GitHub Pages automatically provides SSL certificates for secure OAuth flows.
 - **No Build Process**: Files served directly, reducing complexity and maintenance.
 - **Version Control**: Git for source control, with semantic versioning for releases.
 
@@ -180,7 +217,7 @@ The modular architecture allows for easy expansion:
 
 ### Migration Path
 1. Implement real backend API with same interfaces as mocks.
-2. Add user authentication and cloud storage.
+2. Extend Google authentication to support cloud storage and data synchronization.
 3. Introduce collaborative features and social learning.
 4. Scale to mobile apps using React Native or similar.
 
