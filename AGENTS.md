@@ -12,3 +12,6 @@
 ## Principles
 - Rigorously follow SOLID principles.
 - Design backend/storage modules modularity to allow easy swapping between mocked and real implementations with minimal code changes.
+
+## Documentation
+- Maintain a CHRONICLE.md file with a contextual history of all work done on this codebase, including why certain decisions were made, issues encountered and how they were fixed, to provide good background context for AI coding agents.
