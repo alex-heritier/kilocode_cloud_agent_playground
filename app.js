@@ -1,5 +1,9 @@
 const { useState, useEffect } = React;
 
+// Configurable parameters
+const CARDS_PER_LESSON = 5;
+const LESSON_HOUR = 12; // noon
+
 // Mock card database
 const cards = [
     { id: '1', english: 'hello', vietnamese: 'xin chào', type: 'word' },
@@ -46,16 +50,32 @@ function getReviewQueue(progressMap) {
     });
 }
 
-// Select card for review (simple n+1: prioritize due cards, then new)
-function selectCard(reviewQueue, learnedCards) {
+// Check if new lesson is available (after lesson hour on a new day)
+function isNewLessonAvailable(lessonState) {
+    const now = new Date();
+    const today = now.toDateString();
+    const currentHour = now.getHours();
+    if (lessonState.lastIntroductionDate !== today && currentHour >= LESSON_HOUR) {
+        return true;
+    }
+    return false;
+}
+
+// Select card for review (SRS prioritizes most due, then introduce new in fixed order up to CARDS_PER_LESSON per lesson)
+function selectCard(reviewQueue, learnedCards, lessonState) {
     if (reviewQueue.length > 0) {
-        return reviewQueue[Math.floor(Math.random() * reviewQueue.length)];
+        return { cardId: reviewQueue[0], lessonState }; // Most due card first
     }
     const newCards = cards.filter(card => !learnedCards.has(card.id));
-    if (newCards.length > 0) {
-        return newCards[0].id;
+    if (newCards.length > 0 && lessonState.cardsIntroducedToday < CARDS_PER_LESSON) {
+        const newLessonState = {
+            ...lessonState,
+            cardsIntroducedToday: lessonState.cardsIntroducedToday + 1,
+            lastIntroductionDate: new Date().toDateString()
+        };
+        return { cardId: newCards[0].id, lessonState: newLessonState }; // Next in fixed order
     }
-    return null;
+    return { cardId: null, lessonState };
 }
 
 function CardComponent({ card, side, onSubmit }) {
@@ -110,19 +130,37 @@ function App() {
     const [currentCardId, setCurrentCardId] = useState(null);
     const [side, setSide] = useState('english'); // or 'vietnamese'
     const [learnedCards, setLearnedCards] = useState(new Set());
+    const [lessonState, setLessonState] = useState(() => {
+        const saved = localStorage.getItem('lessonState');
+        return saved ? JSON.parse(saved) : { cardsIntroducedToday: 0, lastIntroductionDate: null };
+    });
 
     useEffect(() => {
         localStorage.setItem('progressMap', JSON.stringify(progressMap));
     }, [progressMap]);
 
     useEffect(() => {
+        localStorage.setItem('lessonState', JSON.stringify(lessonState));
+    }, [lessonState]);
+
+    // Reset lesson state daily if new lesson available
+    useEffect(() => {
+        if (isNewLessonAvailable(lessonState)) {
+            setLessonState({ cardsIntroducedToday: 0, lastIntroductionDate: new Date().toDateString() });
+        }
+    }, [lessonState]);
+
+    useEffect(() => {
         const reviewQueue = getReviewQueue(progressMap);
-        const cardId = selectCard(reviewQueue, learnedCards);
+        const { cardId, lessonState: newLessonState } = selectCard(reviewQueue, learnedCards, lessonState);
         if (cardId) {
             setCurrentCardId(cardId);
             setSide(Math.random() < 0.5 ? 'english' : 'vietnamese');
         }
-    }, [progressMap, learnedCards]);
+        if (newLessonState !== lessonState) {
+            setLessonState(newLessonState);
+        }
+    }, [progressMap, learnedCards, lessonState]);
 
     const handleAnswer = (quality) => {
         if (!currentCardId) return;

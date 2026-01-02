@@ -120,12 +120,15 @@ Implements a modified SM-2 algorithm for optimal memory retention:
 3. **Ease Factor Adjustment**: Increases for correct answers, decreases for incorrect ones.
 4. **Queue Management**: Maintains a review queue sorted by next review date.
 
-### n+1 Strategy
+### n+1 Strategy and Lesson System
 
 - **Fixed Introduction Order**: Cards are introduced to all users in the same predetermined sequence to ensure consistent progression.
-- **Incremental Introduction**: Each session introduces exactly one new card (word or sentence).
+- **Daily Lessons**: New lessons become available every day at a configurable time (default: noon).
+- **Cards Per Lesson**: Each lesson introduces a configurable number of new cards (default: 5).
+- **Incremental Introduction**: Within a lesson, new cards are introduced one at a time as the user progresses.
 - **Contextual Learning**: New cards presented with previously learned vocabulary.
 - **SRS for Reviews**: Once introduced, card review scheduling follows individual user retention via SRS algorithm.
+- **Lesson Limits**: Users can only introduce new cards during available lesson times, encouraging daily study habits.
 
 ### Implementation Details
 
