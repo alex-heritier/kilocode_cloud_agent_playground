@@ -31,6 +31,16 @@ This file maintains a contextual history of all work done on the English to Viet
 - **Purpose**: Ensure ongoing record of development history for AI agents and team continuity.
 - **Creation**: Initialized CHRONICLE.md with this entry and previous work summary.
 
+## Mock Authentication Implementation (2026-01-02)
+
+- **Feature Added**: Replaced Google OAuth with mocked authentication for development/testing.
+- **Decision**: Auto-login as test user to simplify development workflow, avoiding real OAuth setup.
+- **Implementation**: Modified auth.js to set mock user on init, removed Google API calls, updated logout.
+- **Test User**: Hardcoded user with id 'test-user', email 'test@example.com', name 'Test User', placeholder avatar.
+- **Rationale**: Enables quick testing of authenticated features without external dependencies.
+- **PR Created**: Pull request #3 opened for review.
+- **Commit**: "Mock Google login to auto login as test user"
+
 ## Ongoing Development Notes
 
 - **Current State**: MVP with basic flashcard functionality, SRS scheduling, and local persistence.
